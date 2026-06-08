@@ -1,10 +1,15 @@
 // ==UserScript==
-// @name         Immich Backtext viewer
-// @namespace    immich-pairing
+// @name         Immich Reverse
+// @namespace    immich-reverse
 // @version      0.1
+// @description  Show paired reverse-side images for Immich photos named *_a.jpg / *_b.jpg
 // @match        https://photos.spiers.cc/*
+// @downloadURL  https://raw.githubusercontent.com/<owner>/<repo>/main/immich-reverse.user.js TODO
+// @updateURL    https://raw.githubusercontent.com/<owner>/<repo>/main/immich-reverse.user.js TODO
+// @license      MIT
 // @grant        none
 // ==/UserScript==
+
 
 (async function () {
     'use strict';
