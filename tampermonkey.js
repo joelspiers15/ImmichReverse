@@ -148,7 +148,22 @@
         const target = document.getElementById('detail-panel')
         ?.querySelector(':scope > section:last-of-type');
 
-        if (!target) return;
+        // If the target area isn't present yet (initial page load), wait for it once
+        // and then try rendering again. This avoids missing the initial render.
+        if (!target) {
+            const mo = new MutationObserver((mutations, obs) => {
+                const t = document.getElementById('detail-panel')
+                    ?.querySelector(':scope > section:last-of-type');
+                if (t) {
+                    try { obs.disconnect(); } catch (e) {}
+                    // small timeout to allow any framework rendering to settle
+                    setTimeout(() => renderPanel(asset), 50);
+                }
+            });
+
+            mo.observe(document.body, { childList: true, subtree: true });
+            return;
+        }
 
         if (!panel) {
             panel = document.createElement('div');
