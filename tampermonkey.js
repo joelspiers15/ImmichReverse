@@ -12,54 +12,69 @@
     let lastAssetId = null;
 
     async function run() {
-        // Only run on photo detail pages: any URL that ends with /photos/{uuid}
-        const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
-        if (!match) return;
-
-        const assetId = match[1];
-        if (assetId === lastAssetId) return;
-        lastAssetId = assetId;
-
-        try {
-            await showCounterpart();
-        } catch (err) {
-            console.error('Immich Backtext viewer error', err);
+         // Only run on photo detail pages: any URL that ends with /photos/{uuid}
+         const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
+        if (!match) {
+            // left photo detail page (or on another page) — clear any existing panel
+            lastAssetId = null;
+            try { clearPanel(); } catch (e) {}
+            return;
         }
+ 
+         const assetId = match[1];
+         if (assetId === lastAssetId) return;
+         lastAssetId = assetId;
+ 
+         try {
+             await showCounterpart();
+         } catch (err) {
+             console.error('Immich Backtext viewer error', err);
+         }
+     }
+ 
+    // Remove any previously injected panel
+    function clearPanel() {
+        const panel = document.getElementById('paired-image-panel');
+        if (panel) panel.remove();
     }
 
     // Main
     async function showCounterpart() {
-        // get validated UUID from path (match any path that ends with /photos/{uuid})
-        const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
-        if (!match) return;
-        const assetId = match[1];
-
-        const asset = await getAsset(assetId);
-
-        const filename = asset.originalFileName;
-
-        console.log('Found filename: ' + filename);
-
+         // get validated UUID from path (match any path that ends with /photos/{uuid})
+         const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
+         if (!match) return;
+         const assetId = match[1];
+ 
+         const asset = await getAsset(assetId);
+ 
+         const filename = asset.originalFileName;
+ 
+         console.log('Found filename: ' + filename);
+ 
         if (!(filename.endsWith('_a.jpg') || filename.endsWith('_b.jpg'))) {
+            // no valid counterpart naming — clear previous panel if any
+            clearPanel();
             return;
         }
-
+ 
         console.log('File eligible for backtext');
-
-        const opFilename = counterpart(filename);
+ 
+         const opFilename = counterpart(filename);
         console.log('Counterpart filename: ' + opFilename);
-
+ 
         const opAsset = await findAssetByFilename(opFilename);
         if (!opAsset) {
             console.log('No counterpart file found with name ' + opFilename);
+            // no counterpart — clear previous panel if any
+            clearPanel();
             return;
         } else {
             console.log('Counterpart file id: ' + JSON.stringify(opAsset));
         }
-
-        renderPanel(opAsset)
-    }
-
+ 
+         renderPanel(opAsset)
+     }
+ 
     // Text helper
     function counterpart(filename) {
         if (filename.endsWith('_a.jpg')) {
