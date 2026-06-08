@@ -4,7 +4,13 @@ This small userscript injects a "Reverse Side" panel into Immich photo detail pa
 
 It is intended to run in Tampermonkey (or similar userscript managers).
 
-![Example image](images/Example%201.png)
+
+## Examples
+
+<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+  <img src="images/Example%201.png" alt="Example 1" style="max-width:48%;height:auto;flex:1 1 48%;border:1px solid #eee;border-radius:4px;padding:4px;background:#fff">
+  <img src="images/Example%202.png" alt="Example 2" style="max-width:48%;height:auto;flex:1 1 48%;border:1px solid #eee;border-radius:4px;padding:4px;background:#fff">
+</div>
 
 ## Features
 
