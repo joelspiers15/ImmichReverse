@@ -12,20 +12,27 @@
     let lastAssetId = null;
 
     async function run() {
-        const assetId = location.pathname.split('/').pop();
+        // Only run on photo detail pages: any URL that ends with /photos/{uuid}
+        const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
+        if (!match) return;
 
-        if (!assetId || assetId === lastAssetId) {
-            return;
-        }
-
+        const assetId = match[1];
+        if (assetId === lastAssetId) return;
         lastAssetId = assetId;
 
-        await showCounterpart();
+        try {
+            await showCounterpart();
+        } catch (err) {
+            console.error('Immich Backtext viewer error', err);
+        }
     }
 
     // Main
     async function showCounterpart() {
-        const assetId = location.pathname.split('/').pop();
+        // get validated UUID from path (match any path that ends with /photos/{uuid})
+        const match = location.pathname.match(/\/photos\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/)?$/);
+        if (!match) return;
+        const assetId = match[1];
 
         const asset = await getAsset(assetId);
 
@@ -153,21 +160,22 @@
         const section = document.createElement('section');
         section.className = 'px-4 mt-4';
 
-        section.innerHTML = `
-        <div class="flex h-10 w-full items-center justify-between text-sm">
-            <p class="text-gray-600 dark:text-gray-400 font-normal">
-                Reverse Side
-            </p>
-        </div>
+        // Build DOM safely to avoid injecting filename via innerHTML
+        const header = document.createElement('div');
+        header.className = 'flex h-10 w-full items-center justify-between text-sm';
+        const label = document.createElement('p');
+        label.className = 'text-gray-600 dark:text-gray-400 font-normal';
+        label.textContent = 'Reverse Side';
+        header.appendChild(label);
 
-        <a
-            href="/photos/${asset.id}"
-            class="text-xs text-gray-500 -mt-2 mb-2 block break-all hover:text-primary underline"
-            title="Open reverse side image"
-        >
-            ${asset.originalFileName} 🡕
-        </a>
-    `;
+        const link = document.createElement('a');
+        link.href = `/photos/${asset.id}`;
+        link.className = 'text-xs text-gray-500 -mt-2 mb-2 block break-all hover:text-primary underline';
+        link.title = 'Open reverse side image';
+        link.textContent = `${asset.originalFileName} 🡕`;
+
+        section.appendChild(header);
+        section.appendChild(link);
 
         const img = document.createElement('img');
         img.src = imageUrl;
@@ -204,8 +212,13 @@
         const origPushState = history.pushState;
         const origReplaceState = history.replaceState;
 
+        // debounce to avoid rapid repeated runs
+        let triggerTimer = null;
         function trigger() {
-            setTimeout(run, 0);
+            clearTimeout(triggerTimer);
+            triggerTimer = setTimeout(() => {
+                run().catch(err => console.error('Backtext run error', err));
+            }, 120);
         }
 
         history.pushState = function () {
@@ -227,7 +240,13 @@
             subtree: true
         });
 
-        run();
+        // disconnect observer when page unloads
+        window.addEventListener('beforeunload', () => {
+            try { observer.disconnect(); } catch (e) {}
+        });
+
+        // initial run
+        run().catch(err => console.error('Backtext initial run error', err));
     }
 
     hookNavigation();
