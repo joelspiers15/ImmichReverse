@@ -54,25 +54,32 @@
 
         console.log('Found filename: ' + filename);
 
-        if (!(filename.endsWith('_a.jpg') || filename.endsWith('_b.jpg'))) {
-            // no valid counterpart naming, clear previous panel if any
+        // Generate candidate counterpart filenames and try them in order.
+        const candidates = candidateFilenames(filename);
+        if (candidates.length === 0) {
             clearPanel();
             return;
         }
 
-        console.log('File eligible for backtext');
+        console.log('Counterpart candidates: ' + JSON.stringify(candidates));
 
-        const opFilename = counterpart(filename);
-        console.log('Counterpart filename: ' + opFilename);
+        let opAsset = null;
+        for (const cand of candidates) {
+            try {
+                opAsset = await findAssetByFilename(cand);
+            } catch (e) {
+                console.error('Error searching for candidate', cand, e);
+            }
+            if (opAsset) {
+                console.log('Found counterpart:', cand, opAsset.id);
+                break;
+            }
+        }
 
-        const opAsset = await findAssetByFilename(opFilename);
         if (!opAsset) {
-            console.log('No counterpart file found with name ' + opFilename);
-            // no counterpart, clear previous panel if any
+            console.log('No counterpart found for', filename);
             clearPanel();
             return;
-        } else {
-            console.log('Counterpart file id: ' + JSON.stringify(opAsset));
         }
 
         renderPanel(opAsset);
@@ -175,23 +182,39 @@
     // Helpers
     // ==============
 
-    // Get the counterpart filename for a given filename
-    function counterpart(filename) {
-        if (filename.endsWith('_a.jpg')) {
-            return filename.replace('_a.jpg', '_b.jpg');
-        }
-
-        if (filename.endsWith('_b.jpg')) {
-            return filename.replace('_b.jpg', '_a.jpg');
-        }
-
-        return null;
-    }
-
     // Extract validated asset UUID from current pathname, or null
     function getAssetIdFromPath() {
         const m = location.pathname.match(PHOTO_UUID_REGEX);
         return m ? m[1] : null;
+    }
+
+    // Return the most likely counterpart filename(s) for a given filename.
+    // Handles cases like:
+    // - 1990s_0229_a.jpg <-> 1990s_0229_b.jpg
+    // - 1990s_0229.jpg <-> 1990s_0229_b.jpg  (one side omitted suffix)
+    // Returns an array of candidate filenames in priority order.
+    function candidateFilenames(filename) {
+        // Capture base, optional _a/_b suffix, and extension
+        const m = filename.match(/^(.*?)(?:_([ab]))?(\.[^.]+)$/i);
+        if (!m) return [];
+        const base = m[1];
+        const suffix = m[2]; // 'a' or 'b' or undefined
+        const ext = m[3];
+
+        const candidates = [];
+        if (suffix === 'a') {
+            candidates.push(`${base}_b${ext}`);
+            candidates.push(`${base}${ext}`); // maybe counterpart omits suffix
+        } else if (suffix === 'b') {
+            candidates.push(`${base}_a${ext}`);
+            candidates.push(`${base}${ext}`);
+        } else {
+            // no suffix on current file — try both suffixed variants
+            candidates.push(`${base}_a${ext}`);
+            candidates.push(`${base}_b${ext}`);
+        }
+
+        return candidates;
     }
 
     // =================
