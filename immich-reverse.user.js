@@ -3,9 +3,9 @@
 // @namespace    immich-reverse
 // @version      0.1
 // @description  Show paired reverse-side images for Immich photos named *_a.jpg / *_b.jpg
-// @match        https://photos.spiers.cc/*
-// @downloadURL  https://raw.githubusercontent.com/<owner>/<repo>/main/immich-reverse.user.js TODO
-// @updateURL    https://raw.githubusercontent.com/<owner>/<repo>/main/immich-reverse.user.js TODO
+// @match        https://photos.example.com/*
+// @downloadURL  https://github.com/joelspiers15/ImmichReverse/raw/refs/heads/main/immich-reverse.user.js
+// @updateURL    https://github.com/joelspiers15/ImmichReverse/raw/refs/heads/main/immich-reverse.user.js
 // @license      MIT
 // @grant        none
 // ==/UserScript==
