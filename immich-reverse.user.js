@@ -39,7 +39,7 @@
         try {
             await showCounterpart();
         } catch (err) {
-            console.error('Immich Backtext viewer error', err);
+            console.error('Error finding counterpart', err);
         }
     }
 
@@ -52,16 +52,12 @@
 
         const filename = asset.originalFileName;
 
-        console.log('Found filename: ' + filename);
-
         // Generate candidate counterpart filenames and try them in order.
         const candidates = candidateFilenames(filename);
         if (candidates.length === 0) {
             clearPanel();
             return;
         }
-
-        console.log('Counterpart candidates: ' + JSON.stringify(candidates));
 
         let opAsset = null;
         for (const cand of candidates) {
@@ -70,14 +66,13 @@
             } catch (e) {
                 console.error('Error searching for candidate', cand, e);
             }
+            
             if (opAsset) {
-                console.log('Found counterpart:', cand, opAsset.id);
                 break;
             }
         }
 
         if (!opAsset) {
-            console.log('No counterpart found for', filename);
             clearPanel();
             return;
         }
@@ -95,7 +90,7 @@
         function trigger() {
             clearTimeout(triggerTimer);
             triggerTimer = setTimeout(() => {
-                run().catch(err => console.error('Backtext run error', err));
+                run().catch(err => console.error('Error finding counterpart', err));
             }, 120);
         }
 
